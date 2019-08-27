@@ -113,21 +113,21 @@
     - mackup
     - ack
 
-# - name: Create DataDog golang directory structure
+# - name: Create Company golang directory structure
 #   file:
-#     path: "{{ homedir }}/go/src/github.com/DataDog"
+#     path: "{{ homedir }}/go/src/github.com/[[Company]]"
 #     state: directory
 
 # - name: Create ~/wrk symlink
 #   file:
 #     path: "{{ homedir }}/wrk"
 #     state: link
-#     src: "{{ homedir }}/go/src/github.com/DataDog"
+#     src: "{{ homedir }}/go/src/github.com/[[Company]]"
 
 # - name: Clone Repos
 #   git:
-#     repo: "git@github.com:DataDog/{{ item }}"
-#     dest: "{{ homedir }}/go/src/github.com/DataDog/{{ item }}"
+#     repo: "git@github.com:[[Company]]/{{ item }}"
+#     dest: "{{ homedir }}/go/src/github.com/[[Company]]/{{ item }}"
 #     key_file: "{{ homedir }}/.ssh/id_rsa"
 #     update: no
 #   with_items:
@@ -152,11 +152,6 @@
   file:
     path: "{{ homedir }}/.aws"
     state: directory
-
-# - name: Setup AWS Vault Credentials
-#   shell: "{{ homedir }}/go/src/github.com/DataDog/devtools/bin/setup-awsconfig ${USER?} > {{ homedir }}/.aws/config"
-#   args:
-#     creates: "{{ homedir }}/.aws/config"
 
 # - name: Install rbenv
 #   homebrew:
@@ -187,8 +182,18 @@
     - virtualbox
     - vagrant
 
-# - name: Install dogbox
-#   shell: vagrant init datadog/dogbox https://corgi.ddbuild.io/release.json
-#   args:
-#     chdir: "{{ homedir }}/dd"
-#     creates: "{{ homedir }}/dd/Vagrantfile"
+- name: Make Vagrant directory
+  file:
+    path: "{{ homedir }}/vagrant-boxen"
+    state: directory
+
+- name: Make ubuntu64 Directory
+  file:
+    path: "{{ homedir }}/vagrant-boxen/ubuntu64"
+    state: directory
+
+- name: Install ubuntu64
+  shell: vagrant init ubuntu/trusty64
+  args:
+    chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
+    creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"

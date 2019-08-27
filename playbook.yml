@@ -3,7 +3,7 @@
     - name: "shell_rc_raw"
       prompt: "Please enter the path to your shell config file"
       private: no
-      default: "~/.bashrc"
+      default: "~/.bash_profile"
   vars:
     ruby_version: 2.5.1
     homedir: "{{ '~' | expanduser }}"
