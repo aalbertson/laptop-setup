@@ -111,6 +111,7 @@
     - pinentry
     - tfenv # needed for cloudops
     - mackup
+    - ack
 
 # - name: Create DataDog golang directory structure
 #   file:
