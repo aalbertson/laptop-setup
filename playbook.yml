@@ -14,7 +14,7 @@
     HOMEBREW_CASK_OPTS: --require-sha
     PATH: "/usr/local/bin:/usr/local/opt/coreutils/libexec/gnubin:{{ ansible_env.PATH }}"
     GOPATH: "{{ homedir }}/go"
-    WORKING_ROOT: "{{ homedir }}/wrk"
+    WORKING_ROOT: "{{ homedir }}/source"
 
   roles:
     - mac-laptop
