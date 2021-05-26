@@ -96,11 +96,9 @@
     - jq
     - gcc
     - make
-    - gpg2
-    - pinentry
-    - tfenv # needed for cloudops
-    - mackup
+    - tfenv
     - ack
+    - iterm2
 
 # - name: Create Company golang directory structure
 #   file:
