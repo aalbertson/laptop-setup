@@ -1,12 +1,5 @@
-- name: Fetch homebrew installer
-  get_url:
-    url: https://raw.githubusercontent.com/Homebrew/install/master/install
-    dest: "/tmp/homebrew-install.rb"
-
 - name: Install homebrew
-  shell: ruby "/tmp/homebrew-install.rb"
-  args:
-    creates: "/usr/local/Homebrew/.git"
+  shell: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 - name: Ensure that shell RC file exists
   file:
@@ -24,52 +17,49 @@
       export HOMEBREW_NO_INSECURE_REDIRECT=1
       export HOMEBREW_CASK_OPTS=--require-sha
 
-      # Load ruby shims
-      eval "$(rbenv init -)"
-
       # Prefer GNU binaries to Macintosh binaries.
       export PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
 
       # Add devtools binaries to the PATH
-      export PATH="${HOME?}/wrk/devtools/bin:${PATH?}"
+      export PATH="${HOME?}/source/devtools/bin:${PATH?}"
 
       # Point GOPATH to our go sources
       export GOPATH="${HOME?}/go"
 
-      # Point WORKING_ROOT to ~/wrk symlink
-      export WORKING_ROOT="${HOME?}/wrk"
+      # Point WORKING_ROOT to ~/source symlink
+      export WORKING_ROOT="${HOME?}/source"
 
       # Tell the devenv vm to mount $GOPATH/src rather than just dd-go
       export MOUNT_ALL_GO_SRC=1
 
-      # store key in the login keychain instead of aws-vault managing a hidden keychain
-      export AWS_VAULT_KEYCHAIN_NAME=login
+#      # store key in the login keychain instead of aws-vault managing a hidden keychain
+#      export AWS_VAULT_KEYCHAIN_NAME=login
 
-      # tweak session times so you don't have to re-enter passwords every 5min
-      export AWS_SESSION_TTL=24h
-      export AWS_ASSUME_ROLE_TTL=1h
+#      # tweak session times so you don't have to re-enter passwords every 5min
+#      export AWS_SESSION_TTL=24h
+#      export AWS_ASSUME_ROLE_TTL=1h
 
 
-# - name: Ensure SSH config file exists
-#   file:
-#     path: "{{ ssh_config }}"
-#     state: touch
-#     # Recommended perms for .ssh/config
-    # mode: 0644
+- name: Ensure SSH config file exists
+  file:
+    path: "{{ ssh_config }}"
+    state: touch
+    # Recommended perms for .ssh/config
+    mode: 0644
 
-# - name: Setup SSH config
-#   blockinfile:
-#     dest: "{{ ssh_config }}"
-#     block: |
-#       Host *
-#       # IPv4 only for speed
-#       AddressFamily inet
-#       Compression yes
-#       ControlMaster auto
-#       ControlPath /tmp/ssh_mux_%h_%p_%r
-#       ControlPersist 10m
-#       # send a keep-alive after 30s of inactivity
-#       ServerAliveInterval 30
+- name: Setup SSH config
+  blockinfile:
+    dest: "{{ ssh_config }}"
+    block: |
+      Host *
+      # IPv4 only for speed
+      AddressFamily inet
+      Compression yes
+      ControlMaster auto
+      ControlPath /tmp/ssh_mux_%h_%p_%r
+      ControlPersist 10m
+      # send a keep-alive after 30s of inactivity
+      ServerAliveInterval 30
 
 - name: Update homebrew
   homebrew:
@@ -84,7 +74,7 @@
 
 - name: Install homebrew python
   homebrew:
-    name: python@2
+    name: python
 
 # TODO: Figure out a file this creates, then add args: creates: ...
 - name: Install virtualenv
@@ -96,7 +86,6 @@
     name: "{{ item }}"
   loop:
     - golang
-    - gimme
 
 - name: Install useful tools
   homebrew:
@@ -152,28 +141,6 @@
   file:
     path: "{{ homedir }}/.aws"
     state: directory
-
-# - name: Install rbenv
-#   homebrew:
-#     name: rbenv
-
-# - name: Install ruby version
-#   shell: rbenv install "{{ ruby_version }}"
-#   args:
-#     creates: "{{ homedir }}/.rbenv/versions/{{ ruby_version }}"
-
-# - name: Determine current ruby version
-#   shell: rbenv version
-#   register: rbenv_version
-
-# - name: Set ruby version
-#   shell: rbenv global "{{ ruby_version }}"
-#   when: rbenv_version.stdout.split(' ')[0] != ruby_version
-
-# - name: Install ruby bundler
-#   gem:
-#     name: bundler
-    # executable: "{{ homedir }}/.rbenv/versions/{{ ruby_version }}/bin/gem"
 
 - name: Install virtualbox and vagrant
   homebrew_cask:
