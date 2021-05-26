@@ -30,7 +30,6 @@ if ansible-playbook -i hosts.ini playbook.yml --ask-become-pass; then
     echo ""
     echo "    Laptop setup complete!"
     echo ""
-    echo "    Feel free to visit the #dev-eff slack channel with questions!"
     osascript -e 'display notification "Your laptop should be ready to use now! 😸" with title "Laptop Setup Complete"'
 else
     echo ""
