@@ -21,7 +21,8 @@ else
 fi
 
 echo "Installing pip"
-sudo easy_install pip
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py --user
 
 echo "Installing ansible"
 sudo pip install ansible
