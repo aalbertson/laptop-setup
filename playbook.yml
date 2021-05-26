@@ -5,7 +5,6 @@
       private: no
       default: "~/.bash_profile"
   vars:
-    ruby_version: 2.5.1
     homedir: "{{ '~' | expanduser }}"
     shell_rc: "{{ shell_rc_raw | expanduser }}"
     ssh_config: "{{ homedir }}/.ssh/config"
