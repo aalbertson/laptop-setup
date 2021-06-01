@@ -1,0 +1,68 @@
+- name: Check if aws cli config file exists
+  stat:
+    path: "{{ aws_cli_config }}"
+  register: aws_cli_config_stat_result
+
+- name: Ensure that AWSCLI config file exists
+  file:
+    path: "{{ aws_cli_config }}"
+    state: touch
+  when: not aws_cli_config_stat_result.stat.exists
+
+- name: Download awscliv2 installer.
+  unarchive:
+    src: https://awscli.amazonaws.com/AWSCLIV2.pkg
+    dest: "{{ executable_temp_dir | default('/tmp') }}"
+    remote_src: yes
+    creates: /tmp/aws
+    mode: 0755
+
+- name: Run the installer.
+  command:
+  args:
+    cmd: "{{ executable_temp_dir | default('/tmp') }}/aws/install"
+    creates: /usr/local/bin/aws
+  become: true
+  register: aws_install
+
+- name: "Show installer output."
+  debug:
+    var: aws_install
+    verbosity: 2
+
+- name: Setup ~/.aws/config file
+  blockinfile:
+    dest: "{{ aws_cli_config }}"
+    block: |
+      [default]
+      region = us-gov-west-1
+      [profile govdevlab]
+      region = us-gov-west-1
+      [profile govstaging]
+      region = us-gov-west-1
+      [profile govprod]
+      region = us-gov-west-1
+- name: Check if aws cli credentials file exists
+  stat:
+    path: "{{ aws_cli_credentials }}"
+  register: aws_cli_credentials_stat_result
+
+- name: Ensure that AWSCLI credentials file exists
+  file:
+    path: "{{ aws_cli_credentials }}"
+    state: touch
+  when: not aws_cli_credentials_stat_result.stat.exists
+
+- name: Setup ~/.aws/credentials file
+  blockinfile:
+    dest: "{{ aws_cli_credentials }}"
+    block: |
+      [govstaging]
+      aws_access_key_id = <insertKey>
+      aws_secret_access_key = <insertKey>
+      [govdevlab]
+      aws_access_key_id = <insertKey>
+      aws_secret_access_key = <insertKey>
+      [govprod]
+      aws_access_key_id = <insertKey>
+      aws_secret_access_key = <insertKey>

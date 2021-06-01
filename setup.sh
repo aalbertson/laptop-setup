@@ -20,12 +20,44 @@ else
   exit 1
 fi
 
-echo "Installing pip"
-curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-python get-pip.py --user
 
-echo "Installing ansible"
-sudo pip install ansible
+exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+if ! exists brew; then
+  echo "this script requires 'homebrew'."
+  echo "installing..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+else
+  echo "homebrew is installed, continuing..."
+fi
+
+if ! exists python3; then
+  echo "this script requires 'python3'."
+  echo "installing..."
+  export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+  brew install python
+else
+  echo "python3 is installed, continuing..."
+fi
+
+#if ! exists pip3; then
+#  echo "this script requires 'pip3'."
+#  echo "installing..."
+#  curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+#  python get-pip.py --user
+#else
+#  echo "pip3 is installed, continuing..."
+#fi
+
+if ! exists ansible; then
+  echo "this script requires 'ansible'."
+  echo "installing..."
+  sudo pip3 install ansible
+else
+  echo "ansible is installed, continuing..."
+fi
 
 if ansible-playbook -i hosts.ini playbook.yml --ask-become-pass; then
     echo ""
@@ -39,7 +71,5 @@ else
     echo "    It is safe to re-run this script as many times as you"
     echo "    need to."
     echo ""
-    echo "    If you run into trouble don't hesitate to visit the #dev-eff"
-    echo "    slack channel for help troubleshooting!"
     osascript -e 'display notification "Automated laptop setup has failed! 🙀" with title "Laptop Setup Failed!"'
 fi

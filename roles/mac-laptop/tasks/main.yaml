@@ -1,43 +1,41 @@
-- name: Install homebrew
-  shell: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# - name: Ensure that shell RC file exists
+#   file:
+#     path: "{{ shell_rc }}"
+#     state: touch
 
-- name: Ensure that shell RC file exists
-  file:
-    path: "{{ shell_rc }}"
-    state: touch
+# - name: Setup shell variables
+#   blockinfile:
+#     dest: "{{ shell_rc }}"
+#     block: |
+#       # Add homebrew binaries to the path.
+#       export PATH="/usr/local/bin:${PATH?}"
+#       export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 
-- name: Setup shell variables
-  blockinfile:
-    dest: "{{ shell_rc }}"
-    block: |
-      # Add homebrew binaries to the path.
-      export PATH="/usr/local/bin:${PATH?}"
+#       # Force certain more-secure behaviours from homebrew
+#       export HOMEBREW_NO_INSECURE_REDIRECT=1
+#       export HOMEBREW_CASK_OPTS=--require-sha
 
-      # Force certain more-secure behaviours from homebrew
-      export HOMEBREW_NO_INSECURE_REDIRECT=1
-      export HOMEBREW_CASK_OPTS=--require-sha
+#       # Prefer GNU binaries to Macintosh binaries.
+#       export PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
 
-      # Prefer GNU binaries to Macintosh binaries.
-      export PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
+#       # Add devtools binaries to the PATH
+#       export PATH="${HOME?}/source/devtools/bin:${PATH?}"
 
-      # Add devtools binaries to the PATH
-      export PATH="${HOME?}/source/devtools/bin:${PATH?}"
+#       # Point GOPATH to our go sources
+#       export GOPATH="${HOME?}/go"
 
-      # Point GOPATH to our go sources
-      export GOPATH="${HOME?}/go"
+#       # Point WORKING_ROOT to ~/wrk symlink
+#       export WORKING_ROOT="${HOME?}/wrk"
 
-      # Point WORKING_ROOT to ~/source symlink
-      export WORKING_ROOT="${HOME?}/source"
+#       # Tell the devenv vm to mount $GOPATH/src
+#       export MOUNT_ALL_GO_SRC=1
 
-      # Tell the devenv vm to mount $GOPATH/src rather than just dd-go
-      export MOUNT_ALL_GO_SRC=1
+# #      # store key in the login keychain instead of aws-vault managing a hidden keychain
+# #      export AWS_VAULT_KEYCHAIN_NAME=login
 
-#      # store key in the login keychain instead of aws-vault managing a hidden keychain
-#      export AWS_VAULT_KEYCHAIN_NAME=login
-
-#      # tweak session times so you don't have to re-enter passwords every 5min
-#      export AWS_SESSION_TTL=24h
-#      export AWS_ASSUME_ROLE_TTL=1h
+# #      # tweak session times so you don't have to re-enter passwords every 5min
+# #      export AWS_SESSION_TTL=24h
+# #      export AWS_ASSUME_ROLE_TTL=1h
 
 
 - name: Ensure SSH config file exists
@@ -72,11 +70,6 @@
     - bash
     - coreutils
 
-- name: Install homebrew python
-  homebrew:
-    name: python
-
-# TODO: Figure out a file this creates, then add args: creates: ...
 - name: Install virtualenv
   pip:
     name: virtualenv
@@ -90,7 +83,6 @@
 - name: Install useful tools
   homebrew:
     name: "{{ item }}"
-    # name: [u'git', u'jq', u'gcc', u'make', u'gpg2', u'pinentry', u'tfenv', u'mackup']
   loop:
     - git
     - jq
@@ -98,38 +90,8 @@
     - make
     - tfenv
     - ack
-    - iterm2
-
-# - name: Create Company golang directory structure
-#   file:
-#     path: "{{ homedir }}/go/src/github.com/[[Company]]"
-#     state: directory
-
-# - name: Create ~/wrk symlink
-#   file:
-#     path: "{{ homedir }}/wrk"
-#     state: link
-#     src: "{{ homedir }}/go/src/github.com/[[Company]]"
-
-# - name: Clone Repos
-#   git:
-#     repo: "git@github.com:[[Company]]/{{ item }}"
-#     dest: "{{ homedir }}/go/src/github.com/[[Company]]/{{ item }}"
-#     key_file: "{{ homedir }}/.ssh/id_rsa"
-#     update: no
-#   with_items:
-#     - architecture
-#     - consul-config
-#     - datacenter-config
-#     - datastores
-#     - devtools
-#     - dogweb
-#     - dd-go
-#     - devops
-#     - cloudops
-#     - images
-#     - k8s-resources
-#     - logs-backend
+    - ncdu
+    - htop
 
 - name: Install aws-vault tool
   homebrew_cask:
@@ -144,21 +106,54 @@
   homebrew_cask:
     name: "{{ item }}"
   with_items:
+    - iterm2
+    - visual-studio-code
     - virtualbox
     - vagrant
 
-- name: Make Vagrant directory
-  file:
-    path: "{{ homedir }}/vagrant-boxen"
-    state: directory
+# - name: Make Vagrant directory
+#   file:
+#     path: "{{ homedir }}/vagrant-boxen"
+#     state: directory
 
-- name: Make ubuntu64 Directory
-  file:
-    path: "{{ homedir }}/vagrant-boxen/ubuntu64"
-    state: directory
+# - name: Make ubuntu64 Directory
+#   file:
+#     path: "{{ homedir }}/vagrant-boxen/ubuntu64"
+#     state: directory
 
-- name: Install ubuntu64
-  shell: vagrant init ubuntu/trusty64
+# - name: Install ubuntu64
+#   shell: vagrant init ubuntu/trusty64
+#   args:
+#     chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
+#     creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"
+
+- name: install ohmyzsh for current user
+  shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
   args:
-    chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
-    creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"
+    creates: "{{ home_dir }}/.oh-my-zsh"
+
+- name: set the ohmyzsh theme for the current
+  lineinfile:
+    dest: "{{ home_dir }}/.zshrc"
+    regexp: ^ZSH_THEME=.*$
+    line: ZSH_THEME="{{ preferred_ohmyzsh_theme }}"
+
+- name: Fix permissions for zsh auto-completions
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: admin
+    mode: 0755
+  with_items:
+    - /usr/local/share/zsh
+    - /usr/local/share/zsh/site-functions
+
+- name: Set shell to ZSH
+  user:
+    name: "{{ username }}"
+    shell: /bin/zsh
+  become: true
+
+
+# - name: Setup AWS CLI tools and configs
+#   import_tasks: awsclisetup.yml
