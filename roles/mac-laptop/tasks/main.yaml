@@ -38,12 +38,12 @@
 # #      export AWS_ASSUME_ROLE_TTL=1h
 
 
-- name: Ensure SSH config file exists
-  file:
-    path: "{{ ssh_config }}"
-    state: touch
-    # Recommended perms for .ssh/config
-    mode: 0644
+#- name: Ensure SSH config file exists
+#  file:
+#    path: "{{ ssh_config }}"
+#    state: touch
+#    # Recommended perms for .ssh/config
+#    mode: 0644
 
 - name: Setup SSH config
   blockinfile:
@@ -58,6 +58,10 @@
       ControlPersist 10m
       # send a keep-alive after 30s of inactivity
       ServerAliveInterval 30
+      
+      Host gitlab.rebellion.dev
+        PreferredAuthentications publickey
+        IdentityFile ~/.ssh/id_ed25519_rd
 
 - name: Update homebrew
   homebrew:
@@ -74,17 +78,18 @@
   pip:
     name: virtualenv
 
-- name: Install golang
+- name: Install go
   homebrew:
     name: "{{ item }}"
   loop:
-    - golang
+    - go
 
 - name: Install useful tools
   homebrew:
     name: "{{ item }}"
   loop:
     - git
+    - wget
     - jq
     - gcc
     - make
@@ -92,6 +97,10 @@
     - ack
     - ncdu
     - htop
+    - shellcheck
+    - libmagic
+    - watch
+    - tree
 
 - name: Install aws-vault tool
   homebrew_cask:
@@ -110,6 +119,9 @@
     - visual-studio-code
     - virtualbox
     - vagrant
+    - docker
+    - firefox
+    - vivaldi
 
 # - name: Make Vagrant directory
 #   file:
@@ -155,5 +167,8 @@
   become: true
 
 
-# - name: Setup AWS CLI tools and configs
-#   import_tasks: awsclisetup.yml
+- name: Setup AWS CLI tools
+  import_tasks: awsclisetup.yml
+
+- name: Setup AWS CLI configs
+  import_tasks: awsclisetupVault.yml

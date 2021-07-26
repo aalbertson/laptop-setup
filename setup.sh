@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/
-set -euo pipefail
+set -Eeuo pipefail
 IFS=$'\n\t'
 
-if [ $(id -u) -eq 0 ]; then
+if [ "$(id -u)" -eq 0 ]; then
     echo "🙀 This script should not be run as root!"
     echo ""
     echo "Please run this as your user, you will be prompted for your password when necessary."
@@ -59,7 +59,7 @@ else
   echo "ansible is installed, continuing..."
 fi
 
-if ansible-playbook -i hosts.ini playbook.yml --ask-become-pass; then
+if ansible-playbook -i hosts.ini playbook.yml --ask-vault-pass --ask-become-pass; then
     echo ""
     echo "    Laptop setup complete!"
     echo ""

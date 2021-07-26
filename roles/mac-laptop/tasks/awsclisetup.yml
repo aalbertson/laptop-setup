@@ -10,59 +10,32 @@
   when: not aws_cli_config_stat_result.stat.exists
 
 - name: Download awscliv2 installer.
-  unarchive:
-    src: https://awscli.amazonaws.com/AWSCLIV2.pkg
-    dest: "{{ executable_temp_dir | default('/tmp') }}"
-    remote_src: yes
-    creates: /tmp/aws
-    mode: 0755
+  get_url:
+    url: https://awscli.amazonaws.com/AWSCLIV2.pkg
+    dest: ./AWSCLIV2.pkg
+  register: awscli_installer
+
+- name: Check if AWSCLI installer package exists
+  stat:
+    path: "{{ awscli_installer }}"
+  register: awscli_installer_stat_result
+
+- name: Clean up AWSCLI installer package
+  file:
+    # path: "{{ awscli_installer }}"
+    path: AWSCLIV2.pkg
+    state: absent
+  # when: awscli_installer_stat_result.stat.exists
 
 - name: Run the installer.
   command:
   args:
-    cmd: "{{ executable_temp_dir | default('/tmp') }}/aws/install"
-    creates: /usr/local/bin/aws
+    cmd: "installer -pkg AWSCLIV2.pkg -target /"
   become: true
   register: aws_install
+  when: awscli_installer_stat_result.stat.exists
 
 - name: "Show installer output."
   debug:
     var: aws_install
     verbosity: 2
-
-- name: Setup ~/.aws/config file
-  blockinfile:
-    dest: "{{ aws_cli_config }}"
-    block: |
-      [default]
-      region = us-gov-west-1
-      [profile govdevlab]
-      region = us-gov-west-1
-      [profile govstaging]
-      region = us-gov-west-1
-      [profile govprod]
-      region = us-gov-west-1
-- name: Check if aws cli credentials file exists
-  stat:
-    path: "{{ aws_cli_credentials }}"
-  register: aws_cli_credentials_stat_result
-
-- name: Ensure that AWSCLI credentials file exists
-  file:
-    path: "{{ aws_cli_credentials }}"
-    state: touch
-  when: not aws_cli_credentials_stat_result.stat.exists
-
-- name: Setup ~/.aws/credentials file
-  blockinfile:
-    dest: "{{ aws_cli_credentials }}"
-    block: |
-      [govstaging]
-      aws_access_key_id = <insertKey>
-      aws_secret_access_key = <insertKey>
-      [govdevlab]
-      aws_access_key_id = <insertKey>
-      aws_secret_access_key = <insertKey>
-      [govprod]
-      aws_access_key_id = <insertKey>
-      aws_secret_access_key = <insertKey>
