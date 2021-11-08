@@ -122,6 +122,7 @@
     - docker
     - firefox
     - vivaldi
+    - alfred
 
 # - name: Make Vagrant directory
 #   file:
