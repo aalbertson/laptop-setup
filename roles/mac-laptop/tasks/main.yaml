@@ -1,50 +1,3 @@
-# - name: Ensure that shell RC file exists
-#   file:
-#     path: "{{ shell_rc }}"
-#     state: touch
-
-# - name: Setup shell variables
-#   blockinfile:
-#     dest: "{{ shell_rc }}"
-#     block: |
-#       # Add homebrew binaries to the path.
-#       export PATH="/usr/local/bin:${PATH?}"
-#       export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-
-#       # Force certain more-secure behaviours from homebrew
-#       export HOMEBREW_NO_INSECURE_REDIRECT=1
-#       export HOMEBREW_CASK_OPTS=--require-sha
-
-#       # Prefer GNU binaries to Macintosh binaries.
-#       export PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
-
-#       # Add devtools binaries to the PATH
-#       export PATH="${HOME?}/source/devtools/bin:${PATH?}"
-
-#       # Point GOPATH to our go sources
-#       export GOPATH="${HOME?}/go"
-
-#       # Point WORKING_ROOT to ~/wrk symlink
-#       export WORKING_ROOT="${HOME?}/wrk"
-
-#       # Tell the devenv vm to mount $GOPATH/src
-#       export MOUNT_ALL_GO_SRC=1
-
-# #      # store key in the login keychain instead of aws-vault managing a hidden keychain
-# #      export AWS_VAULT_KEYCHAIN_NAME=login
-
-# #      # tweak session times so you don't have to re-enter passwords every 5min
-# #      export AWS_SESSION_TTL=24h
-# #      export AWS_ASSUME_ROLE_TTL=1h
-
-
-#- name: Ensure SSH config file exists
-#  file:
-#    path: "{{ ssh_config }}"
-#    state: touch
-#    # Recommended perms for .ssh/config
-#    mode: 0644
-
 - name: Setup SSH config
   blockinfile:
     dest: "{{ ssh_config }}"
@@ -63,31 +16,28 @@
         PreferredAuthentications publickey
         IdentityFile ~/.ssh/id_ed25519_rd
 
+      # SSH over Session Manager
+      host i-* mi-*
+          #ProxyCommand sh -c "aws --profile $2 --region us-gov-west-1 ssm start-session --target %h"
+          #ProxyCommand sh -c "aws ssm start-session --profile $2 --region us-gov-west-1 --target %h"
+          ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+
+
 - name: Update homebrew
   homebrew:
     update_homebrew: yes
-
-- name: Install GNU bash/coreutils
-  homebrew:
-    name: "{{ item }}"
-  loop:
-    - bash
-    - coreutils
 
 - name: Install virtualenv
   pip:
     name: virtualenv
 
-- name: Install go
-  homebrew:
-    name: "{{ item }}"
-  loop:
-    - go
-
 - name: Install useful tools
   homebrew:
     name: "{{ item }}"
   loop:
+    - bash
+    - coreutils
+    - awscli
     - git
     - wget
     - jq
@@ -101,20 +51,24 @@
     - libmagic
     - watch
     - tree
+    - kubernetes-cli
+    - minikube
+    - mysql
+    - go
+    - k6
+    - krew
 
-- name: Install aws-vault tool
-  homebrew_cask:
-    name: aws-vault
 
 - name: Make ~/.aws Directory
   file:
     path: "{{ homedir }}/.aws"
     state: directory
 
-- name: Install virtualbox and vagrant
+- name: Install Cask based tools
   homebrew_cask:
     name: "{{ item }}"
   with_items:
+    - aws-vault
     - iterm2
     - visual-studio-code
     - virtualbox
@@ -123,22 +77,10 @@
     - firefox
     - vivaldi
     - alfred
-
-# - name: Make Vagrant directory
-#   file:
-#     path: "{{ homedir }}/vagrant-boxen"
-#     state: directory
-
-# - name: Make ubuntu64 Directory
-#   file:
-#     path: "{{ homedir }}/vagrant-boxen/ubuntu64"
-#     state: directory
-
-# - name: Install ubuntu64
-#   shell: vagrant init ubuntu/trusty64
-#   args:
-#     chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
-#     creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"
+    - gimp
+    - wireshark
+    - yubico-yubikey-manager
+    - yubico-yubikey-piv-manager
 
 - name: install ohmyzsh for current user
   shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
@@ -167,9 +109,18 @@
     shell: /bin/zsh
   become: true
 
+# - name: Make Vagrant directory
+#   file:
+#     path: "{{ homedir }}/vagrant-boxen"
+#     state: directory
 
-- name: Setup AWS CLI tools
-  import_tasks: awsclisetup.yml
+# - name: Make ubuntu64 Directory
+#   file:
+#     path: "{{ homedir }}/vagrant-boxen/ubuntu64"
+#     state: directory
 
-- name: Setup AWS CLI configs
-  import_tasks: awsclisetupVault.yml
+# - name: Install ubuntu64
+#   shell: vagrant init ubuntu/trusty64
+#   args:
+#     chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
+#     creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"
