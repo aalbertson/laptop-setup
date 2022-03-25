@@ -59,7 +59,7 @@ else
   echo "ansible is installed, continuing..."
 fi
 
-if ansible-playbook -i hosts.ini playbook.yml --ask-vault-pass --ask-become-pass; then
+if ansible-playbook -i hosts.ini playbook.yml --ask-become-pass; then
     echo ""
     echo "    Laptop setup complete!"
     echo ""

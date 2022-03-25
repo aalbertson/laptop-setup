@@ -12,15 +12,11 @@
       # send a keep-alive after 30s of inactivity
       ServerAliveInterval 30
       
-      Host gitlab.rebellion.dev
-        PreferredAuthentications publickey
-        IdentityFile ~/.ssh/id_ed25519_rd
-
       # SSH over Session Manager
       host i-* mi-*
-          #ProxyCommand sh -c "aws --profile $2 --region us-gov-west-1 ssm start-session --target %h"
-          #ProxyCommand sh -c "aws ssm start-session --profile $2 --region us-gov-west-1 --target %h"
-          ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
+          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
+          ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
 
 
 - name: Update homebrew
