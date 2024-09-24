@@ -1,9 +1,9 @@
 - hosts: localhost
   vars:
     homedir: "{{ '~' | expanduser }}"
-    aws_cli_config: "{{ homedir }}/.aws/config"
-    aws_cli_credentials: "{{ homedir }}/.aws/credentials"
-    ssh_config: "{{ homedir }}/.ssh/config"
+    #aws_cli_config: "{{ homedir }}/.aws/config"
+    #aws_cli_credentials: "{{ homedir }}/.aws/credentials"
+    #ssh_config: "{{ homedir }}/.ssh/config"
     preferred_ohmyzsh_theme: ys
     home_dir: "{{ lookup('env','HOME') }}"
     username: "{{ lookup('env', 'USER') }}"

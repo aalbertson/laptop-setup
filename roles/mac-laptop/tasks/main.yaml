@@ -1,34 +1,34 @@
-- name: Setup SSH config
-  blockinfile:
-    dest: "{{ ssh_config }}"
-    block: |
-      Host *
-      # IPv4 only for speed
-      AddressFamily inet
-      Compression yes
-      ControlMaster auto
-      ControlPath /tmp/ssh_mux_%h_%p_%r
-      ControlPersist 10m
-      # send a keep-alive after 30s of inactivity
-      ServerAliveInterval 30
-      
-      # SSH over Session Manager
-      host i-* mi-*
-          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
-          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
-          ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+#- name: Setup SSH config
+#  blockinfile:
+#    dest: "{{ ssh_config }}"
+#    block: |
+#      Host *
+#      # IPv4 only for speed
+#      AddressFamily inet
+#      Compression yes
+#      ControlMaster auto
+#      ControlPath /tmp/ssh_mux_%h_%p_%r
+#      ControlPersist 10m
+#      # send a keep-alive after 30s of inactivity
+#      ServerAliveInterval 30
+#      
+#      # SSH over Session Manager
+#      host i-* mi-*
+#          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
+#          #ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h"
+#          ProxyCommand sh -c "aws --profile $2 --region $3 ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
 
 
 - name: Update homebrew
-  homebrew:
-    update_homebrew: yes
+  community.general.homebrew:
+    update_homebrew: true
 
 - name: Install virtualenv
-  pip:
+  ansible.builtin.pip:
     name: virtualenv
 
 - name: Install useful tools
-  homebrew:
+  community.general.homebrew:
     name: "{{ item }}"
   loop:
     - bash
@@ -53,21 +53,26 @@
     - go
     - k6
     - krew
+    - ghorg
 
 
 - name: Make ~/.aws Directory
-  file:
+  ansible.builtin.file:
     path: "{{ homedir }}/.aws"
     state: directory
+    mode: '0700'
 
 - name: Install Cask based tools
-  homebrew_cask:
+  community.general.homebrew_cask:
     name: "{{ item }}"
   with_items:
     - aws-vault
+    - 1password
+    - signal
+    - google-chrome
     - iterm2
     - visual-studio-code
-    - virtualbox
+    - vmware-fusion
     - vagrant
     - docker
     - firefox
@@ -75,32 +80,36 @@
     - alfred
     - gimp
     - wireshark
-    - yubico-yubikey-manager
-    - yubico-yubikey-piv-manager
+    - slack
+    - github
+    - balenaetcher
+    - unetbootin
+    # - yubico-yubikey-manager
+    # - yubico-yubikey-piv-manager
 
-- name: install ohmyzsh for current user
-  shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+- name: Install Oh My Zsh for current user
+  ansible.builtin.shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
   args:
     creates: "{{ home_dir }}/.oh-my-zsh"
 
-- name: set the ohmyzsh theme for the current
-  lineinfile:
+- name: Set the Oh My Zsh theme for the current user
+  ansible.builtin.lineinfile:
     dest: "{{ home_dir }}/.zshrc"
     regexp: ^ZSH_THEME=.*$
     line: ZSH_THEME="{{ preferred_ohmyzsh_theme }}"
 
-- name: Fix permissions for zsh auto-completions
-  file:
-    path: "{{ item }}"
-    state: directory
-    group: admin
-    mode: 0755
-  with_items:
-    - /usr/local/share/zsh
-    - /usr/local/share/zsh/site-functions
+#- name: Fix permissions for zsh auto-completions
+#  file:
+#    path: "{{ item }}"
+#    state: directory
+#    group: admin
+#    mode: 0755
+#  with_items:
+#    - /usr/local/share/zsh
+#    - /usr/local/share/zsh/site-functions
 
 - name: Set shell to ZSH
-  user:
+  ansible.builtin.user:
     name: "{{ username }}"
     shell: /bin/zsh
   become: true
@@ -120,3 +129,38 @@
 #   args:
 #     chdir: "{{ homedir }}/vagrant-boxen/ubuntu64"
 #     creates: "{{ homedir }}/vagrant-boxen/ubuntu64/Vagrantfile"
+
+- name: Create aliases in .zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ home_dir }}/.zshrc"
+    line: "{{ item }}"
+  loop:
+    - 'alias ll="ls -la"'
+    - 'alias gs="git status"'
+    - 'alias gp="git pull"'
+    - 'alias gd="git diff"'
+    - 'alias gc="git commit"'
+    - 'alias gcm="git commit -m"'
+    - 'alias gca="git commit --amend"'
+    - 'alias gco="git checkout"'
+    - 'alias gb="git branch"'
+    - 'alias gba="git branch -a"'
+    - 'alias gbd="git branch -d"'
+    - 'alias gbm="git branch -m"'
+    - 'alias gbs="git branch --sort=-committerdate"'
+    - 'alias glog="git log --oneline --decorate --graph"'
+    - 'alias gloga="git log --oneline --decorate --graph --all"'
+    - 'alias tf=terraform'
+    - 'alias tfi="tf init -upgrade"'
+    - 'alias tfp="tf plan"'
+    - 'alias tfa="tf apply"'
+    - 'alias tg=terragrunt'
+    - 'alias tgi="tg init -upgrade"'
+    - 'alias tgp="tg plan"'
+    - 'alias tga="tg apply"'
+    - 'alias python=python3'
+    - 'alias pip=pip3'
+    - 'alias k=kubectl'
+    - 'alias cat=bat'
+    - 'eval "$(starship init zsh)"'
+    - 'alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"'
