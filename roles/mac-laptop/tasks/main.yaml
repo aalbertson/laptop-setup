@@ -23,14 +23,17 @@
   community.general.homebrew:
     update_homebrew: true
 
-- name: Install virtualenv
-  ansible.builtin.pip:
+- name: Install virtualenv via Homebrew
+  community.general.homebrew:
     name: virtualenv
+    state: present
 
 - name: Install useful tools
   community.general.homebrew:
     name: "{{ item }}"
+    state: present
   loop:
+    # Core development tools
     - bash
     - coreutils
     - awscli
@@ -39,18 +42,58 @@
     - jq
     - gcc
     - make
-    - tfenv
-    - ack
-    - ncdu
+    - go
+    - python@3.13
+    - node
+    - pnpm
+    
+    # Development utilities
+    - terraform
+    - helm
+    - golangci-lint
+    - sqlc
+    - sqlite
+    - pipx
+    - ansible
+    
+    # System utilities
     - htop
     - shellcheck
-    - libmagic
     - watch
     - tree
+    - ncdu
+    - ack
+    
+    # Optional tools (currently installed)
+    - boost
+    - brotli
+    - c-ares
+    - ca-certificates
+    - icu4c@77
+    - krb5
+    - libnghttp2
+    - libnghttp3
+    - libngtcp2
+    - libpq
+    - libuv
+    - lz4
+    - mpdecimal
+    - okta-aws-cli
+    - openssl@3
+    - osmium-tool
+    - pmtiles
+    - readline
+    - simdjson
+    - uvwasi
+    - xz
+    - zstd
+    
+    # Tools that may be needed but not currently installed
+    - tfenv
+    - libmagic
     - kubernetes-cli
     - minikube
     - mysql
-    - go
     - k6
     - krew
     - ghorg
@@ -63,40 +106,60 @@
     mode: '0700'
 
 - name: Install Cask based tools
-  community.general.homebrew_cask:
-    name: "{{ item }}"
-  with_items:
-    - aws-vault
-    - 1password
-    - signal
-    - google-chrome
-    - iterm2
-    - visual-studio-code
-    - vmware-fusion
-    - vagrant
-    - docker
-    - firefox
-    - vivaldi
-    - alfred
-    - gimp
-    - wireshark
-    - slack
-    - github
-    - balenaetcher
-    - unetbootin
-    # - yubico-yubikey-manager
-    # - yubico-yubikey-piv-manager
+  block:
+    - name: Install Cask applications
+      community.general.homebrew_cask:
+        name: "{{ item }}"
+        state: present
+      register: cask_install_result
+      loop:
+        # Currently installed applications
+        - 1password
+        - ghostty
+        - pgadmin4
+        
+        # Additional useful applications
+        - aws-vault
+        - signal
+        - google-chrome
+        - iterm2
+        - visual-studio-code
+        - docker
+        - firefox
+        - vivaldi
+        - alfred
+        - gimp
+        - wireshark
+        - slack
+        - github
+        - balenaetcher
+        - unetbootin
+        # - vmware-fusion
+        # - vagrant
+        # - yubico-yubikey-manager
+        # - yubico-yubikey-piv-manager
+  rescue:
+    - name: Show skipped applications (likely already installed outside Homebrew)
+      ansible.builtin.debug:
+        msg: "Some applications may already be installed outside of Homebrew - this is normal"
 
 - name: Install Oh My Zsh for current user
   ansible.builtin.shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
   args:
     creates: "{{ home_dir }}/.oh-my-zsh"
 
+- name: Ensure .zshrc exists
+  ansible.builtin.file:
+    path: "{{ home_dir }}/.zshrc"
+    state: touch
+    mode: '0644'
+
 - name: Set the Oh My Zsh theme for the current user
   ansible.builtin.lineinfile:
     dest: "{{ home_dir }}/.zshrc"
     regexp: ^ZSH_THEME=.*$
     line: ZSH_THEME="{{ preferred_ohmyzsh_theme }}"
+    create: true
 
 #- name: Fix permissions for zsh auto-completions
 #  file:
@@ -134,6 +197,8 @@
   ansible.builtin.lineinfile:
     path: "{{ home_dir }}/.zshrc"
     line: "{{ item }}"
+    create: true
+    backup: true
   loop:
     - 'alias ll="ls -la"'
     - 'alias gs="git status"'
@@ -164,3 +229,6 @@
     - 'alias cat=bat'
     - 'eval "$(starship init zsh)"'
     - 'alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"'
+    - 'alias pn=pnpm'
+    - 'alias h=helm'
+    - 'alias sql=sqlc'
